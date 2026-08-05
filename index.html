@@ -466,6 +466,7 @@
       { _row: 8, card: 'K bank', last4: '', item: '', limit: '', amount: 0, installment: '' }
     ];
     const COLORS = ['#00d9ff', '#168cff', '#4a65ff', '#34efff', '#0084c8', '#7aa7ff', '#1ab6e8'];
+    const CACHE_KEY = 'kditDataCache_v1';
 
     const state = { data: [], filtered: [], deleteRow: null, isPreview: false, calendarDate: startOfMonth(new Date()) };
     const el = id => document.getElementById(id);
@@ -474,8 +475,25 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       bindEvents();
+      hydrateFromCache();
       loadData();
     });
+
+    function hydrateFromCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Array.isArray(cached.data) && cached.data.length) {
+          state.data = cached.data;
+          state.isPreview = false;
+          el('lastUpdated').textContent = 'อัปเดต ' + formatDateTime(cached.fetchedAt) + ' (แคช)';
+          renderAll();
+        }
+      } catch (error) { /* corrupt or unavailable cache, ignore */ }
+    }
+
+    function saveCache(data, fetchedAt) {
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, fetchedAt: fetchedAt || new Date().toISOString() })); } catch (error) { /* storage unavailable, ignore */ }
+    }
 
     function bindEvents() {
       el('refreshBtn').addEventListener('click', loadData);
@@ -515,7 +533,9 @@
         state.data = normalizeData(response.data || []);
         state.isPreview = false;
         setStatus('', 'เชื่อมต่อแล้ว');
-        el('lastUpdated').textContent = 'อัปเดต ' + formatDateTime(response.meta && response.meta.fetchedAt);
+        const fetchedAt = response.meta && response.meta.fetchedAt;
+        el('lastUpdated').textContent = 'อัปเดต ' + formatDateTime(fetchedAt);
+        saveCache(state.data, fetchedAt);
       } catch (error) {
         state.data = normalizeData(EXCEL_SNAPSHOT);
         state.isPreview = true;
@@ -530,10 +550,16 @@
     }
 
     async function apiGet() {
-      const url = API_URL + '?action=getData&_=' + Date.now();
-      const response = await fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow', cache: 'no-store' });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      return response.json();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      try {
+        const url = API_URL + '?action=getData&_=' + Date.now();
+        const response = await fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow', cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     function jsonpGet() {
@@ -799,8 +825,18 @@
       setButtonLoading(el('saveBtn'), true, 'กำลังบันทึก');
       try {
         const result = await apiPost(payload);
-        closeModal('form'); toast(result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว');
-        await loadData();
+        closeModal('form');
+        toast(result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว');
+        if (rowNumber) {
+          const index = state.data.findIndex(row => row._row === Number(rowNumber));
+          if (index !== -1) {
+            state.data[index] = normalizeData([{ ...payload, _row: Number(rowNumber) }])[0];
+            renderAll();
+          }
+          loadData();
+        } else {
+          await loadData();
+        }
       } catch (error) {
         toast(error.message || 'บันทึกข้อมูลไม่สำเร็จ', 'error');
       } finally { setButtonLoading(el('saveBtn'), false); }
@@ -818,9 +854,12 @@
       if (!state.deleteRow) return;
       setButtonLoading(el('confirmDeleteBtn'), true, 'กำลังลบ');
       try {
-        const result = await apiPost({ action: 'deleteData', _row: state.deleteRow });
+        const deletedRow = state.deleteRow;
+        const result = await apiPost({ action: 'deleteData', _row: deletedRow });
         closeModal('delete'); toast(result.message || 'ลบรายการแล้ว');
-        await loadData();
+        state.data = state.data.filter(row => row._row !== deletedRow);
+        renderAll();
+        loadData();
       } catch (error) { toast(error.message || 'ลบรายการไม่สำเร็จ', 'error'); }
       finally { setButtonLoading(el('confirmDeleteBtn'), false); }
     }
