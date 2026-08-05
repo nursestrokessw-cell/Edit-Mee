@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Dashboard สรุปข้อมูลบัตรKdit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700;800&amp;family=Mali:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #12382d;
+      --muted: #668077;
+      --line: #dce9e3;
+      --paper: #ffffff;
+      --canvas: #f1f8f4;
+      --navy: #123f32;
+      --coral: #17845b;
+      --coral-dark: #0d6044;
+      --teal: #31a777;
+      --gold: #c69b34;
+      --danger: #c83d4b;
+      --shadow: 0 16px 40px rgba(10, 61, 43, .1);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(39, 154, 107, .15), transparent 30rem),
+        radial-gradient(circle at 0% 55%, rgba(163, 211, 180, .14), transparent 28rem),
+        var(--canvas);
+      color: var(--ink);
+      font-family: "Anuphan", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+      font-size: 15px;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .shell { width: min(1440px, 100%); margin: 0 auto; padding: 24px clamp(16px, 3vw, 42px) 48px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark {
+      width: 46px; height: 46px; display: grid; place-items: center; border-radius: 15px;
+      color: white; background: linear-gradient(145deg, #2eaf79, #0d6848); box-shadow: 0 10px 24px rgba(16, 112, 76, .25);
+    }
+    .brand h1 { font-family: "Mali", "Anuphan", sans-serif; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.2; margin: 0; letter-spacing: -.02em; }
+    .brand p { color: var(--muted); margin: 4px 0 0; font-size: 13px; }
+    .actions { display: flex; align-items: center; gap: 10px; }
+    .status {
+      display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: 999px;
+      background: #edf8f5; color: #217a70; font-size: 12px; font-weight: 700;
+    }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status.loading { color: #8b651f; background: #fff6df; }
+    .status.error { color: #9d3742; background: #fff0f1; }
+
+    .btn {
+      border: 0; border-radius: 12px; padding: 10px 14px; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; font-weight: 700; transition: .18s ease; min-height: 42px;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { color: #fff; background: linear-gradient(135deg, #20996a, #0d6848); box-shadow: 0 8px 18px rgba(15, 111, 76, .22); }
+    .btn-primary:hover { background: linear-gradient(135deg, #16835a, #094e38); }
+    .btn-ghost { color: var(--ink); background: var(--paper); border: 1px solid var(--line); }
+    .btn-danger { color: white; background: var(--danger); }
+    .icon-btn { width: 38px; height: 38px; padding: 0; border-radius: 10px; }
+    svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.9; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+    .hero {
+      position: relative; overflow: hidden; border-radius: 26px; min-height: 180px; padding: clamp(24px, 4vw, 42px);
+      display: flex; align-items: center; justify-content: space-between; gap: 30px;
+      color: white; background: linear-gradient(125deg, #062f23 0%, #0b4c37 48%, #16704f 100%); box-shadow: var(--shadow);
+    }
+    .hero::before { content: ""; position: absolute; inset: 0; opacity: .14; background-image: radial-gradient(circle, #fff 1.2px, transparent 1.4px); background-size: 24px 24px; mask-image: linear-gradient(90deg, transparent 30%, black); }
+    .hero::after {
+      content: ""; position: absolute; right: -80px; top: -150px; width: 430px; height: 430px; border-radius: 50%;
+      border: 70px solid rgba(255,255,255,.035); box-shadow: 0 0 0 50px rgba(255,255,255,.025);
+    }
+    .hero-copy { position: relative; z-index: 1; max-width: 650px; }
+    .hero-doodles { position: absolute; z-index: 1; inset: 0; pointer-events: none; }
+    .hero-doodle { position: absolute; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #d8f7e6; background: rgba(255,255,255,.1); backdrop-filter: blur(4px); animation: floaty 4s ease-in-out infinite; }
+    .hero-doodle svg { width: 20px; height: 20px; }
+    .hero-doodle.one { right: 34%; top: 22px; transform: rotate(8deg); }
+    .hero-doodle.two { right: 29%; bottom: 20px; animation-delay: -1.4s; transform: rotate(-8deg); }
+    @keyframes floaty { 0%,100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+    .eyebrow { margin: 0 0 9px; color: #a9ebc9; font-size: 12px; letter-spacing: .13em; font-weight: 800; text-transform: uppercase; }
+    .hero h2 { margin: 0; font-family: "Mali", "Anuphan", sans-serif; font-size: clamp(27px, 4vw, 46px); line-height: 1.2; letter-spacing: -.035em; }
+    .hero p:last-child { margin: 13px 0 0; color: #cbe4d8; max-width: 560px; }
+    .hero-card {
+      z-index: 1; flex: 0 0 270px; padding: 21px; border-radius: 19px; transform: rotate(-2deg);
+      background: linear-gradient(135deg, #63c98c, #198a5f 58%, #0b5a40); box-shadow: 0 18px 38px rgba(0,0,0,.2);
+    }
+    .hero-card small { opacity: .82; }
+    .hero-card strong { display: block; font-size: 29px; margin: 22px 0 15px; letter-spacing: .06em; }
+    .hero-card-footer { display: flex; justify-content: space-between; font-size: 12px; opacity: .9; }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 18px 0; }
+    .metric { background: var(--paper); border: 1px solid rgba(225,228,235,.8); border-radius: var(--radius); padding: 19px; box-shadow: 0 7px 24px rgba(30,39,63,.045); }
+    .metric-head { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
+    .metric-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+    .metric-icon svg { width: 17px; }
+    .metric:nth-child(1) .metric-icon { color: #137a54; background: #e8f7ef; }
+    .metric:nth-child(2) .metric-icon { color: #246f50; background: #edf8f1; }
+    .metric:nth-child(3) .metric-icon { color: #528e3e; background: #f0f8ea; }
+    .metric:nth-child(4) .metric-icon { color: #9b751b; background: #fff7df; }
+    .metric-value { margin: 12px 0 2px; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.15; font-weight: 800; letter-spacing: -.03em; }
+    .metric-note { color: var(--muted); font-size: 11px; }
+
+    .view-tabs { display: flex; gap: 6px; margin: 18px 0; padding: 5px; width: fit-content; border-radius: 13px; background: #dfeee6; }
+    .view-tab { border: 0; border-radius: 9px; padding: 9px 15px; color: var(--muted); background: transparent; font-weight: 750; }
+    .view-tab.active { color: #0b6545; background: white; box-shadow: 0 3px 10px rgba(18,88,62,.1); }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 18px; margin-bottom: 18px; }
+    .panel { background: var(--paper); border: 1px solid rgba(225,228,235,.8); border-radius: var(--radius); padding: 22px; box-shadow: 0 8px 25px rgba(30,39,63,.045); }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
+    .panel h3 { margin: 0; font-size: 17px; }
+    .panel-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .usage-list { display: grid; gap: 16px; }
+    .usage-row-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: 13px; }
+    .usage-row-top strong { max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .usage-row-top span { color: var(--muted); }
+    .track { height: 8px; border-radius: 99px; background: #eef0f4; overflow: hidden; }
+    .fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--coral), #f18a69); transition: width .35s ease; }
+    .fill.warn { background: linear-gradient(90deg, var(--gold), #efc35f); }
+    .fill.danger { background: linear-gradient(90deg, #bb3948, #e45f68); }
+    .due-list { display: grid; gap: 10px; }
+    .due-item { display: grid; grid-template-columns: 48px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 11px; border: 1px solid var(--line); border-radius: 13px; }
+    .due-date { height: 45px; display: grid; place-items: center; border-radius: 11px; color: #0e744f; background: #e8f7ef; font-size: 10px; line-height: 1; }
+    .due-date strong { display: block; font-size: 18px; }
+    .due-copy { min-width: 0; }
+    .due-copy strong, .due-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .due-copy span { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .due-amount { font-weight: 800; white-space: nowrap; }
+    .chart-wrap { min-height: 245px; display: grid; grid-template-columns: minmax(170px, 1fr) minmax(125px, .7fr); align-items: center; gap: 8px; }
+    #brandChart { width: 100%; max-width: 240px; aspect-ratio: 1; justify-self: center; }
+    .legend { display: grid; gap: 10px; }
+    .legend-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .legend-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-value { color: var(--muted); }
+
+    .records { padding: 0; overflow: hidden; }
+    .records-toolbar { padding: 20px 22px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .records-title h3 { margin: 0; font-size: 18px; }
+    .records-title span { color: var(--muted); font-size: 12px; }
+    .filters { display: flex; gap: 9px; }
+    .field-shell { position: relative; }
+    .field-shell svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--muted); }
+    .input, .select {
+      width: 100%; height: 42px; color: var(--ink); background: #fbfbfc; border: 1px solid var(--line);
+      border-radius: 11px; outline: none; transition: .18s; padding: 0 12px;
+    }
+    .field-shell .input { padding-left: 37px; min-width: 235px; }
+    .input:focus, .select:focus { border-color: #2b9c6f; box-shadow: 0 0 0 3px rgba(32,153,106,.12); background: white; }
+    .select { min-width: 150px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 850px; }
+    th { text-align: left; color: var(--muted); background: #fafafb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 12px 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    td { padding: 14px 18px; border-bottom: 1px solid #f0f1f4; vertical-align: middle; }
+    tbody tr { transition: .14s; }
+    tbody tr:hover { background: #f4fbf7; }
+    .card-cell { display: flex; align-items: center; gap: 11px; font-weight: 750; }
+    .card-mini { width: 35px; height: 27px; border-radius: 7px; display: grid; place-items: center; color: white; font-size: 9px; background: var(--navy); box-shadow: 0 3px 9px rgba(30,39,63,.14); }
+    .last4 { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .money { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+    .pill { display: inline-flex; padding: 5px 9px; border-radius: 99px; color: #146b4b; background: #e6f6ed; font-size: 11px; }
+    .row-actions { display: flex; justify-content: flex-end; gap: 5px; }
+    .table-action { border: 0; background: transparent; color: var(--muted); width: 33px; height: 33px; border-radius: 9px; display: grid; place-items: center; }
+    .table-action:hover { color: var(--ink); background: #eef0f4; }
+    .table-action.delete:hover { color: var(--danger); background: #fff0f1; }
+    .empty { padding: 50px 20px; text-align: center; color: var(--muted); }
+    .empty svg { width: 36px; height: 36px; margin-bottom: 8px; color: #aeb4c1; }
+    .records-footer { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; padding: 12px 22px 16px; }
+
+    .calendar-panel { padding: 0; overflow: hidden; }
+    .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+    .calendar-toolbar h3 { margin: 0; font-size: 20px; text-transform: capitalize; }
+    .calendar-actions { display: flex; gap: 7px; }
+    .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .calendar-weekdays { color: var(--muted); background: #fafafb; border-bottom: 1px solid var(--line); }
+    .calendar-weekdays div { padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 750; }
+    .calendar-day { min-height: 124px; padding: 9px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: white; }
+    .calendar-day:nth-child(7n) { border-right: 0; }
+    .calendar-day.other { background: #fafafb; color: #aeb4c1; }
+    .calendar-day.today .day-number { color: white; background: var(--coral); }
+    .day-number { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 9px; font-size: 12px; font-weight: 750; }
+    .calendar-events { display: grid; gap: 5px; margin-top: 7px; }
+    .calendar-event { width: 100%; border: 0; border-left: 3px solid var(--coral); border-radius: 6px; padding: 5px 6px; text-align: left; color: var(--ink); background: #e8f7ef; font-size: 10px; overflow: hidden; }
+    .calendar-event strong, .calendar-event span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .calendar-event span { color: var(--muted); }
+    .calendar-summary { padding: 15px 22px 20px; display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 12px; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 18px; background: rgba(17,24,39,.54); backdrop-filter: blur(5px); opacity: 0; visibility: hidden; transition: .18s; }
+    .modal-backdrop.open { opacity: 1; visibility: visible; }
+    .modal { width: min(600px, 100%); max-height: min(800px, 92vh); overflow-y: auto; border-radius: 22px; background: white; box-shadow: 0 30px 70px rgba(0,0,0,.22); transform: translateY(12px) scale(.985); transition: .18s; }
+    .modal-backdrop.open .modal { transform: none; }
+    .modal-head { padding: 22px 24px 17px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--line); }
+    .modal-head h3 { margin: 0; font-size: 20px; }
+    .modal-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .modal-close { border: 0; background: #f4f5f7; color: var(--muted); }
+    .form-body { padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: grid; gap: 7px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .card-presets { display: flex; flex-wrap: wrap; gap: 7px; }
+    .card-preset { border: 1px solid #cfe4d9; border-radius: 999px; padding: 6px 10px; color: #176246; background: #f1faf5; font-size: 11px; }
+    .card-preset:hover { border-color: #64b58e; background: #e4f5eb; }
+    label { font-size: 12px; font-weight: 750; }
+    .required { color: var(--coral); }
+    .hint { color: var(--muted); font-size: 10px; }
+    .form-group .input { height: 45px; }
+    .modal-foot { padding: 16px 24px 22px; display: flex; justify-content: flex-end; gap: 10px; }
+    .confirm-body { padding: 25px 24px 8px; text-align: center; }
+    .confirm-icon { margin: 0 auto 14px; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; color: var(--danger); background: #fff0f1; }
+    .confirm-icon svg { width: 24px; height: 24px; }
+    .confirm-body h3 { margin: 0 0 7px; }
+    .confirm-body p { margin: 0; color: var(--muted); }
+    .confirm-body strong { color: var(--ink); }
+
+    .toast-wrap { position: fixed; right: 20px; bottom: 20px; z-index: 50; display: grid; gap: 10px; }
+    .toast { min-width: min(360px, calc(100vw - 40px)); max-width: 420px; border-radius: 13px; padding: 13px 15px; color: white; background: #0d5039; box-shadow: 0 14px 34px rgba(0,0,0,.2); animation: toast-in .2s ease; }
+    .toast.error { background: #a93240; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.45); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .hero-card { display: none; }
+      .hero-doodle.one { right: 8%; }
+      .hero-doodle.two { right: 17%; }
+    }
+    @media (max-width: 700px) {
+      .shell { padding-top: 16px; }
+      .topbar { align-items: flex-start; }
+      .brand p, .status, #refreshBtn span, #addBtn span { display: none; }
+      .actions { margin-top: 3px; }
+      .btn { padding: 10px; }
+      .hero { min-height: 210px; }
+      .metrics { gap: 10px; }
+      .metric { padding: 15px; }
+      .records-toolbar { align-items: stretch; flex-direction: column; }
+      .filters { width: 100%; }
+      .field-shell { flex: 1; }
+      .field-shell .input { min-width: 0; }
+      .select { min-width: 115px; max-width: 40%; }
+      .form-body { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: auto; }
+      .chart-wrap { grid-template-columns: 1fr; }
+      .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-wrap { overflow: visible; }
+      table { min-width: 0; display: block; }
+      thead { display: none; }
+      tbody { display: grid; gap: 12px; padding: 0 14px 16px; }
+      tbody tr { display: grid; padding: 13px; border: 1px solid var(--line); border-radius: 15px; background: white; box-shadow: 0 6px 18px rgba(12,72,51,.06); }
+      tbody td { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 3px; border-bottom: 1px dashed #e4eee8; text-align: left; }
+      tbody td::before { content: attr(data-label); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+      tbody td:first-child { padding-top: 2px; }
+      tbody td:last-child { border: 0; padding-bottom: 0; }
+      .money { text-align: left; }
+      .row-actions { justify-content: flex-start; }
+      tbody .empty { grid-column: 1 / -1; }
+      .calendar-day { min-height: 92px; padding: 5px; }
+      .calendar-event { padding: 4px; }
+      .calendar-event span { display: none; }
+    }
+    @media (max-width: 460px) {
+      .brand-mark { width: 40px; height: 40px; border-radius: 12px; }
+      .brand h1 { font-size: 17px; }
+      .metrics { grid-template-columns: 1fr; }
+      .hero { padding: 24px; }
+      .panel { padding: 18px; }
+      .filters { flex-direction: column; }
+      .select { max-width: none; }
+      .calendar-toolbar { align-items: flex-start; flex-direction: column; }
+      .calendar-day { min-height: 70px; }
+      .calendar-event { font-size: 0; min-height: 8px; padding: 0; }
+      .calendar-event strong, .calendar-event span { display: none; }
+      .view-tabs { width: 100%; }
+      .view-tab { flex: 1; padding-inline: 8px; }
+      .records-footer, .calendar-summary { align-items: flex-start; flex-direction: column; }
+      .due-item { grid-template-columns: 44px minmax(0,1fr); }
+      .due-amount { grid-column: 2; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="4"></rect><path d="M3 10h18"></path><path d="M8 14h.01M16 14h.01"></path><path d="M9.5 16.2c1.4 1.1 3.6 1.1 5 0"></path></svg></div>
+        <div><h1>บัตรKdit</h1><p>ศูนย์รวมข้อมูลบัตรและรายการผ่อน</p></div>
+      </div>
+      <div class="actions">
+        <span id="status" class="status loading">กำลังเชื่อมต่อ</span>
+        <button id="refreshBtn" class="btn btn-ghost" type="button" title="โหลดข้อมูลใหม่"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5"></path><path d="M4 17v-5h5"></path><path d="M6.1 9A7 7 0 0 1 18.4 6.4L20 12"></path><path d="M4 12l1.6 5.6A7 7 0 0 0 17.9 15"></path></svg><span>รีเฟรช</span></button>
+        <button id="addBtn" class="btn btn-primary" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg><span>เพิ่มบัตร</span></button>
+      </div>
+    </header>
+
+    <nav class="view-tabs" aria-label="เลือกหน้าการแสดงผล">
+      <button class="view-tab active" type="button" data-view="overview">ภาพรวม</button>
+      <button class="view-tab" type="button" data-view="calendar">ปฏิทินรายการจ่าย</button>
+    </nav>
+
+    <div id="overviewView" class="view active">
+
+    <section class="hero">
+      <div class="hero-doodles" aria-hidden="true">
+        <span class="hero-doodle one"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"></path></svg></span>
+        <span class="hero-doodle two"><svg viewBox="0 0 24 24"><path d="M12 3c1.1 4.6 3.4 6.9 8 8-4.6 1.1-6.9 3.4-8 8-1.1-4.6-3.4-6.9-8-8 4.6-1.1 6.9-3.4 8-8z"></path></svg></span>
+      </div>
+      <div class="hero-copy">
+        <p class="eyebrow">Credit overview</p>
+        <h2>Dashboard สรุปข้อมูล<br>บัตรKdit</h2>
+        <p>ดูวันที่จ่าย ยอดรายการ และรายการผ่อนทั้งหมดได้ในมุมมองเดียว พร้อมอัปเดตข้อมูลบน Google Sheets แบบเรียลไทม์</p>
+      </div>
+      <div class="hero-card" aria-hidden="true">
+        <small>ยอดจ่ายเดือนนี้</small>
+        <strong id="heroRemaining">฿0</strong>
+        <div class="hero-card-footer"><span>KDIT CARD</span><span>•••• <span id="heroLast4">0000</span></span></div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="ข้อมูลสรุป">
+      <article class="metric"><div class="metric-head"><span>จำนวนบัตร</span><span class="metric-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M3 10h18"></path></svg></span></div><div id="metricCards" class="metric-value">0</div><div id="metricCardsNote" class="metric-note">0 สถาบัน</div></article>
+      <article class="metric"><div class="metric-head"><span>ครบกำหนดเดือนนี้</span><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M6 2v3M18 2v3M4 8h16M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1z"></path></svg></span></div><div id="metricLimit" class="metric-value">0</div><div class="metric-note">รายการที่มีวันที่จ่ายเดือนนี้</div></article>
+      <article class="metric"><div class="metric-head"><span>ยอดใช้ / รายการ</span><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M6 2v3M18 2v3M4 8h16M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1z"></path></svg></span></div><div id="metricAmount" class="metric-value">฿0</div><div id="metricAmountNote" class="metric-note">0 รายการผ่อน</div></article>
+      <article class="metric"><div class="metric-head"><span>ยอดจ่ายเดือนนี้</span><span class="metric-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8M12 8v8"></path></svg></span></div><div id="metricRemaining" class="metric-value">฿0</div><div id="metricUsageNote" class="metric-note">ยังไม่มีวันครบกำหนด</div></article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel">
+        <div class="panel-head"><div><h3>รายการจ่ายที่กำลังมาถึง</h3><div class="panel-sub">เรียงตามวันที่จ่ายจากใกล้ไปไกล</div></div></div>
+        <div id="usageList" class="usage-list"></div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>บัตรแยกตามสถาบัน</h3><div class="panel-sub">จำนวนบัตรในแต่ละกลุ่ม</div></div></div>
+        <div class="chart-wrap"><canvas id="brandChart" width="280" height="280" aria-label="กราฟสัดส่วนบัตร"></canvas><div id="brandLegend" class="legend"></div></div>
+      </article>
+    </section>
+
+    <section class="panel records">
+      <div class="records-toolbar">
+        <div class="records-title"><h3>รายการบัตรทั้งหมด</h3><span id="recordCount">0 รายการ</span></div>
+        <div class="filters">
+          <div class="field-shell"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="searchInput" class="input" type="search" placeholder="ค้นหาบัตร เลขท้าย หรือรายการ..."></div>
+          <select id="cardFilter" class="select" aria-label="กรองตามบัตร"><option value="">ทุกบัตร</option></select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>บัตร</th><th>เลขที่</th><th>รายการ</th><th>วันที่จ่าย (Limit)</th><th style="text-align:right">จำนวน</th><th>งวดที่</th><th aria-label="จัดการ"></th></tr></thead>
+          <tbody id="dataBody"></tbody>
+        </table>
+      </div>
+      <div class="records-footer"><span>ข้อมูลจากชีต “data”</span><span id="lastUpdated">ยังไม่อัปเดต</span></div>
+    </section>
+    </div>
+
+    <section id="calendarView" class="view">
+      <article class="panel calendar-panel">
+        <div class="calendar-toolbar">
+          <div><h3 id="calendarTitle">ปฏิทินรายการจ่าย</h3><div class="panel-sub">คลิกรายการในปฏิทินเพื่อแก้ไข</div></div>
+          <div class="calendar-actions"><button id="todayBtn" class="btn btn-ghost" type="button">เดือนนี้</button><button id="prevMonthBtn" class="btn btn-ghost icon-btn" type="button" aria-label="เดือนก่อน"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button><button id="nextMonthBtn" class="btn btn-ghost icon-btn" type="button" aria-label="เดือนถัดไป"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"></path></svg></button></div>
+        </div>
+        <div class="calendar-weekdays"><div>อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div></div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="calendar-summary"><span id="calendarCount">0 รายการ</span><strong id="calendarTotal">รวม ฿0</strong></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="formBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <form id="cardForm" class="modal">
+      <div class="modal-head"><div><h3 id="formTitle">เพิ่มรายการบัตร</h3><p>กรอกข้อมูลให้ตรงกับรายการในบัตร</p></div><button class="btn icon-btn modal-close" type="button" data-close="form" aria-label="ปิด"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+      <div class="form-body">
+        <input id="rowNumber" type="hidden">
+        <div class="form-group"><label for="card">บัตร <span class="required">*</span></label><input id="card" class="input" name="card" maxlength="100" required placeholder="เช่น KTC, UOB, TTB" list="cardSuggestions"><datalist id="cardSuggestions"></datalist><div class="card-presets"><button class="card-preset" type="button" data-card-preset="HomrPro">🏠 HomrPro</button><button class="card-preset" type="button" data-card-preset="K bank">🌿 K bank</button></div></div>
+        <div class="form-group"><label for="last4">เลขที่</label><input id="last4" class="input" name="last4" type="text" inputmode="numeric" pattern="[0-9]{0,4}" maxlength="4" placeholder="เลขท้ายไม่เกิน 4 หลัก"><span class="hint">เก็บเป็นข้อความเพื่อรองรับเลข 0 นำหน้า</span></div>
+        <div class="form-group full"><label for="item">รายการ</label><input id="item" class="input" name="item" maxlength="500" placeholder="ชื่อสินค้า บริการ หรือรายละเอียดรายการ"></div>
+        <div class="form-group"><label for="limit">วันที่จ่าย (Limit)</label><input id="limit" class="input" name="limit" type="date"><span class="hint">เลือกวันและเดือนสำหรับแสดงในปฏิทิน</span></div>
+        <div class="form-group"><label for="amount">จำนวน</label><input id="amount" class="input" name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="form-group full"><label for="installment">งวดที่</label><input id="installment" class="input" name="installment" maxlength="100" placeholder="เช่น 3/10 หรือ งวด 3 จาก 10"></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-ghost" type="button" data-close="form">ยกเลิก</button><button id="saveBtn" class="btn btn-primary" type="submit">บันทึกรายการ</button></div>
+    </form>
+  </div>
+
+  <div id="deleteBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <div class="modal" style="max-width:430px">
+      <div class="confirm-body"><div class="confirm-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path></svg></div><h3 id="deleteTitle">ลบรายการนี้หรือไม่?</h3><p>รายการบัตร <strong id="deleteName">—</strong> จะถูกลบจาก Google Sheets</p></div>
+      <div class="modal-foot"><button class="btn btn-ghost" type="button" data-close="delete">ยกเลิก</button><button id="confirmDeleteBtn" class="btn btn-danger" type="button">ลบรายการ</button></div>
+    </div>
+  </div>
+  <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxYvkIjlYDcFIa4fEy2dqIySGiV8GABFFxikkRTFpqtM1y_0mXCJqLgk7CpbxufCWJkxw/exec';
+    const DEFAULT_CARDS = ['KTC', 'UOB', 'TTB', 'The One', 'HomrPro', 'K bank'];
+    const EXCEL_SNAPSHOT = [
+      { _row: 2, card: 'KTC', last4: '1972', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 3, card: 'UOB', last4: '2117', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 4, card: 'UOB', last4: '7109', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 5, card: 'TTB', last4: '', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 6, card: 'The One', last4: '', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 7, card: 'HomrPro', last4: '', item: '', limit: '', amount: 0, installment: '' },
+      { _row: 8, card: 'K bank', last4: '', item: '', limit: '', amount: 0, installment: '' }
+    ];
+    const COLORS = ['#0d6848', '#17845b', '#2ca873', '#5bbb7f', '#7b9f3a', '#b28d2c', '#28705b'];
+
+    const state = { data: [], filtered: [], deleteRow: null, isPreview: false, calendarDate: startOfMonth(new Date()) };
+    const el = id => document.getElementById(id);
+    const money = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    const number = new Intl.NumberFormat('th-TH');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      bindEvents();
+      loadData();
+    });
+
+    function bindEvents() {
+      el('refreshBtn').addEventListener('click', loadData);
+      el('addBtn').addEventListener('click', () => openForm());
+      el('searchInput').addEventListener('input', applyFilters);
+      el('cardFilter').addEventListener('change', applyFilters);
+      el('cardForm').addEventListener('submit', saveRecord);
+      el('confirmDeleteBtn').addEventListener('click', deleteRecord);
+      document.querySelectorAll('[data-card-preset]').forEach(button => button.addEventListener('click', () => { el('card').value = button.dataset.cardPreset; el('card').focus(); }));
+      document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => switchView(button.dataset.view)));
+      el('todayBtn').addEventListener('click', () => { state.calendarDate = startOfMonth(new Date()); renderCalendar(); });
+      el('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+      el('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+      document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => closeModal(button.dataset.close)));
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', event => {
+        if (event.target === backdrop) closeModal(backdrop.id === 'formBackdrop' ? 'form' : 'delete');
+      }));
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { closeModal('form'); closeModal('delete'); }
+      });
+      window.addEventListener('resize', debounce(renderBrandChart, 120));
+    }
+
+    async function loadData() {
+      setStatus('loading', 'กำลังเชื่อมต่อ');
+      setButtonLoading(el('refreshBtn'), true);
+      try {
+        let response;
+        try {
+          response = await apiGet();
+        } catch (fetchError) {
+          response = await jsonpGet();
+        }
+        if (!response.success) throw new Error(response.message || 'โหลดข้อมูลไม่สำเร็จ');
+        state.data = normalizeData(response.data || []);
+        state.isPreview = false;
+        setStatus('', 'เชื่อมต่อแล้ว');
+        el('lastUpdated').textContent = 'อัปเดต ' + formatDateTime(response.meta && response.meta.fetchedAt);
+      } catch (error) {
+        state.data = normalizeData(EXCEL_SNAPSHOT);
+        state.isPreview = true;
+        setStatus('error', 'ตัวอย่างออฟไลน์');
+        el('lastUpdated').textContent = 'แสดงข้อมูลตั้งต้นจาก Excel';
+        toast('เชื่อมต่อ Web App ไม่สำเร็จ — แสดงข้อมูลตัวอย่างจาก Excel', 'error', 5500);
+        console.error(error);
+      } finally {
+        renderAll();
+        setButtonLoading(el('refreshBtn'), false);
+      }
+    }
+
+    async function apiGet() {
+      const url = API_URL + '?action=getData&_=' + Date.now();
+      const response = await fetch(url, { method: 'GET', mode: 'cors', redirect: 'follow', cache: 'no-store' });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }
+
+    function jsonpGet() {
+      return new Promise((resolve, reject) => {
+        const callback = '__kditCallback_' + Date.now();
+        const script = document.createElement('script');
+        const cleanup = () => { delete window[callback]; script.remove(); clearTimeout(timer); };
+        const timer = setTimeout(() => { cleanup(); reject(new Error('หมดเวลาการเชื่อมต่อ')); }, 12000);
+        window[callback] = payload => { cleanup(); resolve(payload); };
+        script.onerror = () => { cleanup(); reject(new Error('JSONP เชื่อมต่อไม่สำเร็จ')); };
+        script.src = API_URL + '?action=getData&callback=' + encodeURIComponent(callback) + '&_=' + Date.now();
+        document.head.appendChild(script);
+      });
+    }
+
+    async function apiPost(payload) {
+      const body = new URLSearchParams();
+      Object.entries(payload).forEach(([key, value]) => body.set(key, value == null ? '' : String(value)));
+      const response = await fetch(API_URL, { method: 'POST', mode: 'cors', redirect: 'follow', body });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || 'ดำเนินการไม่สำเร็จ');
+      return result;
+    }
+
+    function normalizeData(data) {
+      return data.map((row, index) => ({
+        _row: Number(row._row || row.rowNumber || index + 2),
+        card: String(row.card ?? row['บัตร'] ?? '').trim(),
+        last4: String(row.last4 ?? row['เลขที่'] ?? '').trim(),
+        item: String(row.item ?? row['รายการ'] ?? '').trim(),
+        limit: normalizeDate(row.limit),
+        amount: toNumber(row.amount ?? row['จำนวน']),
+        installment: String(row.installment ?? row['งวดที่'] ?? '').trim()
+      }));
+    }
+
+    function renderAll() {
+      renderMetrics();
+      renderUsage();
+      renderFilters();
+      renderBrandChart();
+      renderCalendar();
+      applyFilters();
+    }
+
+    function renderMetrics() {
+      const currentMonth = monthKey(new Date());
+      const totals = state.data.reduce((acc, row) => {
+        acc.amount += row.amount;
+        if (row.limit && row.limit.slice(0, 7) === currentMonth) { acc.monthCount += 1; acc.monthAmount += row.amount; }
+        if (row.installment) acc.installments += 1;
+        return acc;
+      }, { amount: 0, installments: 0, monthCount: 0, monthAmount: 0 });
+      const brands = new Set(state.data.map(row => row.card).filter(Boolean));
+      const nextDue = state.data.filter(row => row.limit && parseLocalDate(row.limit) >= startOfDay(new Date())).sort((a, b) => a.limit.localeCompare(b.limit))[0];
+      el('metricCards').textContent = number.format(state.data.length);
+      el('metricCardsNote').textContent = number.format(brands.size) + ' สถาบัน';
+      el('metricLimit').textContent = number.format(totals.monthCount);
+      el('metricAmount').textContent = money.format(totals.amount);
+      el('metricAmountNote').textContent = number.format(totals.installments) + ' รายการผ่อน';
+      el('metricRemaining').textContent = money.format(totals.monthAmount);
+      el('metricUsageNote').textContent = nextDue ? 'ครั้งถัดไป ' + formatThaiDate(nextDue.limit) : 'ยังไม่มีวันครบกำหนด';
+      el('heroRemaining').textContent = money.format(totals.monthAmount);
+      el('heroLast4').textContent = state.data.find(row => row.last4)?.last4 || '0000';
+    }
+
+    function renderUsage() {
+      const list = el('usageList');
+      const today = isoLocal(new Date());
+      const upcoming = state.data.filter(row => row.limit && row.limit >= today).sort((a, b) => a.limit.localeCompare(b.limit)).slice(0, 6);
+      if (!upcoming.length) { list.innerHTML = emptyHtml('ยังไม่มีรายการที่ระบุวันที่จ่าย'); return; }
+      list.className = 'usage-list due-list';
+      list.innerHTML = upcoming.map(row => { const date = parseLocalDate(row.limit); return `<div class="due-item"><div class="due-date"><strong>${date.getDate()}</strong>${date.toLocaleDateString('th-TH', { month: 'short' })}</div><div class="due-copy"><strong>${escapeHtml(row.card || 'ไม่ระบุ')} ${row.last4 ? '••' + escapeHtml(row.last4) : ''}</strong><span>${escapeHtml(row.item || row.installment || 'รายการชำระ')}</span></div><div class="due-amount">${money.format(row.amount)}</div></div>`; }).join('');
+    }
+
+    function renderFilters() {
+      const select = el('cardFilter');
+      const current = select.value;
+      const cards = [...new Set(state.data.map(row => row.card).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+      const suggestions = [...new Set([...DEFAULT_CARDS, ...cards])];
+      select.innerHTML = '<option value="">ทุกบัตร</option>' + cards.map(card => `<option value="${escapeAttr(card)}">${escapeHtml(card)}</option>`).join('');
+      if (cards.includes(current)) select.value = current;
+      el('cardSuggestions').innerHTML = suggestions.map(card => `<option value="${escapeAttr(card)}"></option>`).join('');
+    }
+
+    function applyFilters() {
+      const query = el('searchInput').value.trim().toLocaleLowerCase('th');
+      const card = el('cardFilter').value;
+      state.filtered = state.data.filter(row => {
+        const haystack = [row.card, row.last4, row.item, row.installment, row.limit, formatThaiDate(row.limit)].join(' ').toLocaleLowerCase('th');
+        return (!query || haystack.includes(query)) && (!card || row.card === card);
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const body = el('dataBody');
+      el('recordCount').textContent = number.format(state.filtered.length) + ' รายการ';
+      if (!state.filtered.length) {
+        body.innerHTML = `<tr><td colspan="7">${emptyHtml('ไม่พบรายการที่ค้นหา')}</td></tr>`;
+        return;
+      }
+      body.innerHTML = state.filtered.map(row => `<tr>
+        <td data-label="บัตร"><div class="card-cell"><span class="card-mini" style="background:${cardColor(row.card)}">${escapeHtml(initials(row.card))}</span><span>${escapeHtml(row.card || '—')}</span></div></td>
+        <td data-label="เลขที่" class="last4">${row.last4 ? '•••• ' + escapeHtml(row.last4) : '—'}</td>
+        <td data-label="รายการ">${escapeHtml(row.item || '—')}</td>
+        <td data-label="วันที่จ่าย">${row.limit ? formatThaiDate(row.limit) : '—'}</td>
+        <td data-label="จำนวน" class="money">${money.format(row.amount)}</td>
+        <td data-label="งวดที่">${row.installment ? `<span class="pill">${escapeHtml(row.installment)}</span>` : '—'}</td>
+        <td data-label="จัดการ"><div class="row-actions"><button class="table-action" type="button" data-edit="${row._row}" aria-label="แก้ไข"><svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.6-10.6a2 2 0 0 0-2.8-2.8L5.4 16.2 4 20zM14.5 7.1l2.8 2.8"></path></svg></button><button class="table-action delete" type="button" data-delete="${row._row}" aria-label="ลบ"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path></svg></button></div></td>
+      </tr>`).join('');
+      body.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => openForm(Number(button.dataset.edit))));
+      body.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => openDelete(Number(button.dataset.delete))));
+    }
+
+    function renderBrandChart() {
+      const canvas = el('brandChart');
+      const ctx = canvas.getContext('2d');
+      const ratio = window.devicePixelRatio || 1;
+      const displaySize = Math.min(canvas.parentElement?.clientWidth || 240, 240);
+      canvas.style.width = displaySize + 'px'; canvas.style.height = displaySize + 'px';
+      canvas.width = displaySize * ratio; canvas.height = displaySize * ratio;
+      ctx.scale(ratio, ratio); ctx.clearRect(0, 0, displaySize, displaySize);
+      const counts = state.data.reduce((acc, row) => { const key = row.card || 'ไม่ระบุ'; acc[key] = (acc[key] || 0) + 1; return acc; }, {});
+      const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const total = entries.reduce((sum, entry) => sum + entry[1], 0);
+      const center = displaySize / 2, radius = displaySize * .4, lineWidth = displaySize * .17;
+      if (!total) {
+        ctx.beginPath(); ctx.arc(center, center, radius, 0, Math.PI * 2); ctx.strokeStyle = '#edf0f4'; ctx.lineWidth = lineWidth; ctx.stroke();
+      } else {
+        let angle = -Math.PI / 2;
+        entries.forEach((entry, index) => {
+          const sweep = entry[1] / total * Math.PI * 2;
+          ctx.beginPath(); ctx.arc(center, center, radius, angle + .018, angle + sweep - .018); ctx.strokeStyle = COLORS[index % COLORS.length]; ctx.lineWidth = lineWidth; ctx.stroke(); angle += sweep;
+        });
+      }
+      ctx.fillStyle = '#172033'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `800 ${Math.max(24, displaySize * .14)}px system-ui`;
+      ctx.fillText(number.format(total), center, center - 7);
+      ctx.fillStyle = '#7a8190'; ctx.font = `500 ${Math.max(10, displaySize * .05)}px system-ui`; ctx.fillText('บัตรทั้งหมด', center, center + 22);
+      el('brandLegend').innerHTML = entries.length ? entries.map((entry, index) => `<div class="legend-item"><span class="legend-dot" style="background:${COLORS[index % COLORS.length]}"></span><span class="legend-name">${escapeHtml(entry[0])}</span><span class="legend-value">${number.format(entry[1])}</span></div>`).join('') : '<span class="panel-sub">ยังไม่มีข้อมูล</span>';
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === view));
+      el('overviewView').classList.toggle('active', view === 'overview');
+      el('calendarView').classList.toggle('active', view === 'calendar');
+      if (view === 'calendar') renderCalendar();
+    }
+
+    function changeMonth(offset) {
+      state.calendarDate = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth() + offset, 1);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = state.calendarDate.getFullYear(), monthIndex = state.calendarDate.getMonth();
+      el('calendarTitle').textContent = state.calendarDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+      const first = new Date(year, monthIndex, 1);
+      const gridStart = new Date(year, monthIndex, 1 - first.getDay());
+      const todayKey = isoLocal(new Date());
+      const cells = [];
+      for (let index = 0; index < 42; index++) {
+        const date = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + index);
+        const key = isoLocal(date);
+        const events = state.data.filter(row => row.limit === key);
+        const classes = ['calendar-day'];
+        if (date.getMonth() !== monthIndex) classes.push('other');
+        if (key === todayKey) classes.push('today');
+        cells.push(`<div class="${classes.join(' ')}"><span class="day-number">${date.getDate()}</span><div class="calendar-events">${events.map(row => `<button class="calendar-event" type="button" data-calendar-edit="${row._row}" title="${escapeAttr(row.card + ' ' + (row.item || '') + ' ' + money.format(row.amount))}"><strong>${escapeHtml(row.card || 'ไม่ระบุ')}</strong><span>${money.format(row.amount)}</span></button>`).join('')}</div></div>`);
+      }
+      el('calendarGrid').innerHTML = cells.join('');
+      el('calendarGrid').querySelectorAll('[data-calendar-edit]').forEach(button => button.addEventListener('click', () => openForm(Number(button.dataset.calendarEdit))));
+      const monthRows = state.data.filter(row => row.limit && row.limit.slice(0, 7) === `${year}-${String(monthIndex + 1).padStart(2, '0')}`);
+      el('calendarCount').textContent = number.format(monthRows.length) + ' รายการในเดือนนี้';
+      el('calendarTotal').textContent = 'รวม ' + money.format(monthRows.reduce((sum, row) => sum + row.amount, 0));
+    }
+
+    function openForm(rowNumber) {
+      const record = rowNumber ? state.data.find(row => row._row === rowNumber) : null;
+      el('cardForm').reset();
+      el('rowNumber').value = record ? record._row : '';
+      el('formTitle').textContent = record ? 'แก้ไขรายการบัตร' : 'เพิ่มรายการบัตร';
+      el('saveBtn').textContent = record ? 'บันทึกการแก้ไข' : 'บันทึกรายการ';
+      if (record) {
+        ['card', 'last4', 'item', 'limit', 'amount', 'installment'].forEach(key => { el(key).value = record[key] ?? ''; });
+      }
+      el('formBackdrop').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => el('card').focus(), 80);
+    }
+
+    async function saveRecord(event) {
+      event.preventDefault();
+      if (!event.currentTarget.reportValidity()) return;
+      const rowNumber = el('rowNumber').value;
+      const payload = {
+        action: rowNumber ? 'updateData' : 'addData',
+        _row: rowNumber,
+        card: el('card').value.trim(), last4: el('last4').value.trim(), item: el('item').value.trim(),
+        limit: el('limit').value, amount: el('amount').value || 0, installment: el('installment').value.trim()
+      };
+      setButtonLoading(el('saveBtn'), true, 'กำลังบันทึก');
+      try {
+        const result = await apiPost(payload);
+        closeModal('form'); toast(result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว');
+        await loadData();
+      } catch (error) {
+        toast(error.message || 'บันทึกข้อมูลไม่สำเร็จ', 'error');
+      } finally { setButtonLoading(el('saveBtn'), false); }
+    }
+
+    function openDelete(rowNumber) {
+      const record = state.data.find(row => row._row === rowNumber);
+      if (!record) return;
+      state.deleteRow = rowNumber;
+      el('deleteName').textContent = record.card + (record.last4 ? ' •••• ' + record.last4 : '');
+      el('deleteBackdrop').classList.add('open'); document.body.style.overflow = 'hidden';
+    }
+
+    async function deleteRecord() {
+      if (!state.deleteRow) return;
+      setButtonLoading(el('confirmDeleteBtn'), true, 'กำลังลบ');
+      try {
+        const result = await apiPost({ action: 'deleteData', _row: state.deleteRow });
+        closeModal('delete'); toast(result.message || 'ลบรายการแล้ว');
+        await loadData();
+      } catch (error) { toast(error.message || 'ลบรายการไม่สำเร็จ', 'error'); }
+      finally { setButtonLoading(el('confirmDeleteBtn'), false); }
+    }
+
+    function closeModal(name) {
+      const backdrop = name === 'form' ? el('formBackdrop') : el('deleteBackdrop');
+      backdrop.classList.remove('open');
+      if (name === 'delete') state.deleteRow = null;
+      if (!document.querySelector('.modal-backdrop.open')) document.body.style.overflow = '';
+    }
+
+    function setStatus(type, text) { el('status').className = 'status ' + type; el('status').textContent = text; }
+    function setButtonLoading(button, loading, label) {
+      if (loading) { button.dataset.original = button.innerHTML; button.disabled = true; button.innerHTML = `<span class="spinner"></span>${label ? `<span>${label}</span>` : ''}`; }
+      else if (button.dataset.original) { button.innerHTML = button.dataset.original; button.disabled = false; delete button.dataset.original; }
+    }
+    function toast(message, type = '', duration = 3500) {
+      const node = document.createElement('div'); node.className = 'toast ' + type; node.textContent = message; el('toastWrap').appendChild(node);
+      setTimeout(() => node.remove(), duration);
+    }
+    function toNumber(value) { const result = Number(String(value ?? '').replace(/[^0-9.-]/g, '')); return Number.isFinite(result) ? result : 0; }
+    function normalizeDate(value) {
+      if (!value || value === 0 || value === '0') return '';
+      if (value instanceof Date && !Number.isNaN(value.getTime())) return isoLocal(value);
+      const text = String(value).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+      const match = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (!match) return '';
+      let year = Number(match[3]); if (year > 2400) year -= 543;
+      return `${year}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
+    }
+    function parseLocalDate(value) { const parts = String(value).split('-').map(Number); return new Date(parts[0], parts[1] - 1, parts[2]); }
+    function isoLocal(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    function startOfMonth(date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+    function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+    function monthKey(date) { return isoLocal(date).slice(0, 7); }
+    function formatThaiDate(value) { if (!value) return ''; const date = parseLocalDate(value); return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }); }
+    function initials(value) { const parts = String(value || 'C').trim().split(/\s+/); return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase(); }
+    function cardColor(value) { let hash = 0; for (const char of String(value || '')) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0; return COLORS[Math.abs(hash) % COLORS.length]; }
+    function formatDateTime(value) { const date = value ? new Date(value) : new Date(); return Number.isNaN(date.getTime()) ? 'ล่าสุด' : date.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }); }
+    function emptyHtml(text) { return `<div class="empty"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M3 10h18"></path></svg><div>${escapeHtml(text)}</div></div>`; }
+    function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]); }
+    function escapeAttr(value) { return escapeHtml(value); }
+    function debounce(fn, delay) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); }; }
+  </script>
+</body>
+</html>
