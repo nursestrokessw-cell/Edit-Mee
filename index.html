@@ -118,14 +118,23 @@
     .annual-filters { display: flex; align-items: center; gap: 8px; }
     .annual-filters .select { min-width: 150px; }
     .annual-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; scrollbar-color: #00d9ff #08152e; }
-    .annual-table { min-width: 1250px; font-size: 11px; }
+    .annual-table { min-width: 1580px; font-size: 11px; }
     .annual-table th, .annual-table td { padding: 11px 10px; text-align: right; white-space: nowrap; }
     .annual-table th:first-child, .annual-table td:first-child { position: sticky; left: 0; z-index: 2; min-width: 140px; text-align: left; background: #0d2042; }
     .annual-table thead th:first-child { z-index: 3; }
-    .annual-table th:last-child, .annual-table td:last-child { color: #70ecff; font-weight: 800; background: rgba(0, 217, 255, .06); }
+    .annual-table .annual-total { color: #70ecff; font-weight: 800; background: rgba(0, 217, 255, .06); }
     .annual-table tbody tr:hover { background: rgba(0, 217, 255, .055); }
     .annual-card { display: flex; align-items: center; gap: 8px; }
     .annual-card-dot { width: 9px; height: 9px; border-radius: 3px; box-shadow: 0 0 10px currentColor; }
+    .annual-item { display: block; max-width: 190px; overflow: hidden; color: #b8d9eb; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+    .annual-actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+    .annual-record-select { width: 145px; height: 31px; border: 1px solid #24517e; border-radius: 8px; padding: 0 7px; color: #bfefff; background: #071a35; font: inherit; font-size: 9px; outline: none; }
+    .annual-record-select:focus { border-color: #00d9ff; box-shadow: 0 0 10px rgba(0,217,255,.13); }
+    .annual-action { border: 1px solid #24517e; border-radius: 8px; padding: 6px 8px; display: inline-flex; align-items: center; gap: 5px; color: #8deeff; background: #0a2444; font-size: 10px; font-weight: 700; }
+    .annual-action svg { width: 13px; height: 13px; }
+    .annual-action:hover { border-color: #00d9ff; box-shadow: 0 0 12px rgba(0,217,255,.14); }
+    .annual-action.delete { color: #ff86aa; border-color: #713452; background: rgba(255,77,133,.07); }
+    .annual-action.delete:hover { border-color: #ff4d85; box-shadow: 0 0 12px rgba(255,77,133,.13); }
     .annual-zero { color: #496783; }
     .annual-summary { display: flex; justify-content: flex-end; gap: 22px; padding-top: 14px; color: var(--muted); font-size: 12px; }
     .annual-summary strong { color: #70ecff; font-size: 15px; }
@@ -363,7 +372,7 @@
 
     <section class="panel annual-dashboard" aria-labelledby="annualHeading">
       <div class="annual-head">
-        <div><h3 id="annualHeading">ตารางยอดจ่ายรายเดือน ครบ 1 ปี</h3><div class="panel-sub">ยอดรวมของแต่ละบัตรตั้งแต่เดือนมกราคมถึงธันวาคม</div></div>
+        <div><h3 id="annualHeading">ตารางยอดจ่ายรายเดือน ครบ 1 ปี</h3><div class="panel-sub">แยกบัตรและรายการ พร้อมแก้ไขหรือลบได้จาก Dashboard</div></div>
         <div class="annual-filters">
           <select id="annualCardFilter" class="select" aria-label="กรองบัตรในตารางรายปี"><option value="">ทุกบัตร</option></select>
           <select id="annualYearFilter" class="select" aria-label="กรองปี พ.ศ."></select>
@@ -371,7 +380,7 @@
       </div>
       <div class="annual-table-wrap">
         <table class="annual-table">
-          <thead><tr><th>บัตร</th><th>ม.ค.</th><th>ก.พ.</th><th>มี.ค.</th><th>เม.ย.</th><th>พ.ค.</th><th>มิ.ย.</th><th>ก.ค.</th><th>ส.ค.</th><th>ก.ย.</th><th>ต.ค.</th><th>พ.ย.</th><th>ธ.ค.</th><th>รวมทั้งปี</th></tr></thead>
+          <thead><tr><th>บัตร</th><th>รายการ</th><th>ม.ค.</th><th>ก.พ.</th><th>มี.ค.</th><th>เม.ย.</th><th>พ.ค.</th><th>มิ.ย.</th><th>ก.ค.</th><th>ส.ค.</th><th>ก.ย.</th><th>ต.ค.</th><th>พ.ย.</th><th>ธ.ค.</th><th class="annual-total">รวมทั้งปี</th><th>จัดการ</th></tr></thead>
           <tbody id="annualPaymentBody"></tbody>
           <tfoot id="annualPaymentFoot"></tfoot>
         </table>
@@ -617,32 +626,47 @@
     function renderAnnualTable() {
       const selectedCard = el('annualCardFilter').value;
       const selectedYear = Number(el('annualYearFilter').value) || new Date().getFullYear();
-      const cards = [...new Set(state.data.map(row => row.card).filter(Boolean))]
-        .filter(card => !selectedCard || card === selectedCard)
-        .sort((a, b) => a.localeCompare(b, 'th'));
-      const matrix = Object.fromEntries(cards.map(card => [card, Array(12).fill(0)]));
-      const yearRows = state.data.filter(row => row.limit && Number(row.limit.slice(0, 4)) === selectedYear && (!selectedCard || row.card === selectedCard));
+      const yearRows = state.data
+        .filter(row => row.limit && Number(row.limit.slice(0, 4)) === selectedYear && (!selectedCard || row.card === selectedCard))
+        .sort((a, b) => a.card.localeCompare(b.card, 'th') || a.item.localeCompare(b.item, 'th') || a.limit.localeCompare(b.limit));
+      const groupMap = new Map();
       yearRows.forEach(row => {
+        const itemKey = row.item || '';
+        const key = row.card + '\u241f' + itemKey;
+        if (!groupMap.has(key)) groupMap.set(key, { card: row.card, item: itemKey, values: Array(12).fill(0), records: [], total: 0 });
+        const group = groupMap.get(key);
         const monthIndex = Number(row.limit.slice(5, 7)) - 1;
-        if (matrix[row.card] && monthIndex >= 0 && monthIndex < 12) matrix[row.card][monthIndex] += row.amount;
+        if (monthIndex >= 0 && monthIndex < 12) group.values[monthIndex] += row.amount;
+        group.records.push(row);
+        group.total += row.amount;
       });
+      const groups = [...groupMap.values()].sort((a, b) => a.card.localeCompare(b.card, 'th') || a.item.localeCompare(b.item, 'th'));
 
       const monthTotals = Array(12).fill(0);
       let grandTotal = 0;
-      if (!cards.length) {
-        el('annualPaymentBody').innerHTML = '<tr><td colspan="14">' + emptyHtml('ยังไม่มีข้อมูลบัตร') + '</td></tr>';
+      if (!groups.length) {
+        el('annualPaymentBody').innerHTML = '<tr><td colspan="16">' + emptyHtml('ยังไม่มีรายการจ่ายในปีที่เลือก') + '</td></tr>';
       } else {
-        el('annualPaymentBody').innerHTML = cards.map(card => {
-          const values = matrix[card];
-          const rowTotal = values.reduce((sum, value, monthIndex) => { monthTotals[monthIndex] += value; return sum + value; }, 0);
-          grandTotal += rowTotal;
-          return `<tr><td><span class="annual-card"><i class="annual-card-dot" style="color:${cardColor(card)};background:${cardColor(card)}"></i>${escapeHtml(card)}</span></td>${values.map(value => `<td class="${value ? '' : 'annual-zero'}">${value ? money.format(value) : '฿0'}</td>`).join('')}<td>${money.format(rowTotal)}</td></tr>`;
+        el('annualPaymentBody').innerHTML = groups.map(group => {
+          group.values.forEach((value, monthIndex) => { monthTotals[monthIndex] += value; });
+          grandTotal += group.total;
+          const itemLabel = group.item || 'ไม่ระบุรายการ';
+          const recordPicker = group.records.length > 1
+            ? `<select class="annual-record-select" data-annual-record aria-label="เลือกรายการย่อย">${group.records.map(record => `<option value="${record._row}">${escapeHtml(formatThaiDate(record.limit) + ' · ' + money.format(record.amount) + (record.installment ? ' · ' + record.installment : ''))}</option>`).join('')}</select>`
+            : `<input type="hidden" data-annual-record value="${group.records[0]._row}">`;
+          return `<tr><td><span class="annual-card"><i class="annual-card-dot" style="color:${cardColor(group.card)};background:${cardColor(group.card)}"></i>${escapeHtml(group.card)}</span></td><td><span class="annual-item" title="${escapeAttr(itemLabel)}">${escapeHtml(itemLabel)}</span></td>${group.values.map(value => `<td class="${value ? '' : 'annual-zero'}">${value ? money.format(value) : '฿0'}</td>`).join('')}<td class="annual-total">${money.format(group.total)}</td><td><div class="annual-actions">${recordPicker}<button class="annual-action" type="button" data-annual-edit-group><svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.6-10.6a2 2 0 0 0-2.8-2.8L5.4 16.2 4 20zM14.5 7.1l2.8 2.8"></path></svg><span>แก้ไข</span></button><button class="annual-action delete" type="button" data-annual-delete-group><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path></svg><span>ลบ</span></button></div></td></tr>`;
         }).join('');
       }
 
-      el('annualPaymentFoot').innerHTML = `<tr><th>รวม</th>${monthTotals.map(value => `<th>${money.format(value)}</th>`).join('')}<th>${money.format(grandTotal)}</th></tr>`;
-      el('annualPaymentCount').textContent = number.format(yearRows.length) + ' รายการใน พ.ศ. ' + (selectedYear + 543);
+      el('annualPaymentFoot').innerHTML = `<tr><th colspan="2">รวม</th>${monthTotals.map(value => `<th>${money.format(value)}</th>`).join('')}<th class="annual-total">${money.format(grandTotal)}</th><th>—</th></tr>`;
+      el('annualPaymentBody').querySelectorAll('[data-annual-edit-group]').forEach(button => button.addEventListener('click', () => openForm(selectedAnnualRecord_(button))));
+      el('annualPaymentBody').querySelectorAll('[data-annual-delete-group]').forEach(button => button.addEventListener('click', () => openDelete(selectedAnnualRecord_(button))));
+      el('annualPaymentCount').textContent = number.format(yearRows.length) + ' รายการ · ' + number.format(groups.length) + ' แถว ใน พ.ศ. ' + (selectedYear + 543);
       el('annualPaymentTotal').textContent = 'รวม ' + money.format(grandTotal);
+    }
+
+    function selectedAnnualRecord_(button) {
+      return Number(button.closest('.annual-actions').querySelector('[data-annual-record]').value);
     }
 
     function renderUsage() {
